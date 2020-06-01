@@ -192,23 +192,26 @@ public class MiuiUtils {
     }
 
     public static void toPermisstionSetting(Context context) throws NoSuchFieldException, IllegalAccessException {
-        int rom = getMiuiVersion();
-        Intent intent = null;
-        if (5 == rom) {
-            Uri packageURI = Uri.parse("package:" + context.getApplicationInfo().packageName);
-            intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, packageURI);
-        } else if (rom == 6 || rom == 7) {
-            intent = new Intent("miui.intent.action.APP_PERM_EDITOR");
-            intent.setClassName("com.miui.securitycenter", "com.miui.permcenter.permissions.AppPermissionsEditorActivity");
-            intent.putExtra("extra_pkgname", context.getPackageName());
-        } else if (rom == 8 || rom == 9) {
-            intent = new Intent("miui.intent.action.APP_PERM_EDITOR");
-            intent.setClassName("com.miui.securitycenter", "com.miui.permcenter.permissions.PermissionsEditorActivity");
-            intent.putExtra("extra_pkgname", context.getPackageName());
-        } else {
-            RomUtils.commonROMPermissionApplyInternal(context);
-            return;
+        try {
+            // MIUI 8
+            Intent localIntent = new Intent("miui.intent.action.APP_PERM_EDITOR");
+            localIntent.setClassName("com.miui.securitycenter", "com.miui.permcenter.permissions.PermissionsEditorActivity");
+            localIntent.putExtra("extra_pkgname", context.getPackageName());
+            context.startActivity(localIntent);
+        } catch (Exception e) {
+            try {
+                // MIUI 5/6/7
+                Intent localIntent = new Intent("miui.intent.action.APP_PERM_EDITOR");
+                localIntent.setClassName("com.miui.securitycenter", "com.miui.permcenter.permissions.AppPermissionsEditorActivity");
+                localIntent.putExtra("extra_pkgname", context.getPackageName());
+                context.startActivity(localIntent);
+            } catch (Exception e1) {
+                // 否则跳转到应用详情
+                Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                Uri uri = Uri.fromParts("package", context.getPackageName(), null);
+                intent.setData(uri);
+                context.startActivity(intent);
+            }
         }
-        context.startActivity(intent);
     }
 }
